@@ -3,6 +3,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { getLineCol } from "../utils/cursor.mjs";
+import { useTheme } from "../ThemeContext.js";
 
 interface ParamsEditorProps {
   value: string;
@@ -12,10 +13,12 @@ interface ParamsEditorProps {
 
 /** Renders YAML content line by line with an inline cursor when active */
 export function ParamsEditor({ value, cursorPos, active }: ParamsEditorProps): React.ReactElement {
+  const t = useTheme();
+
   if (value.trim() === "") {
     return (
       <Box flexGrow={1} paddingX={1}>
-        <Text dimColor>{active ? "█" : "empty"}</Text>
+        <Text {...t.paramsEditor.empty}>{active ? "█" : "empty"}</Text>
       </Box>
     );
   }
@@ -36,7 +39,7 @@ export function ParamsEditor({ value, cursorPos, active }: ParamsEditorProps): R
         return (
           <Text key={idx}>
             {before}
-            <Text backgroundColor="white" color="black">{cursorChar}</Text>
+            <Text {...t.paramsEditor.cursor}>{cursorChar}</Text>
             {after}
           </Text>
         );

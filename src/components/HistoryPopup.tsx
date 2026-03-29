@@ -3,6 +3,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import type { HistoryEntry } from "../types.mjs";
+import { useTheme } from "../ThemeContext.js";
 
 interface HistoryPopupProps {
   entries: HistoryEntry[];
@@ -16,6 +17,9 @@ export function HistoryPopup({
   activeId,
   selectedIndex,
 }: HistoryPopupProps): React.ReactElement {
+  const t = useTheme();
+  const b = t.historyPopup.border;
+
   return (
     <Box
       position="absolute"
@@ -23,30 +27,35 @@ export function HistoryPopup({
       marginLeft={4}
       width={64}
       flexDirection="column"
-      borderStyle="single"
-      borderColor="cyan"
+      borderStyle={b.style as "single"}
+      borderColor={b.color}
+      backgroundColor={b.backgroundColor}
     >
-      <Text color="cyan"> History   ↑↓ navigate   Enter load   D delete   Esc close</Text>
+      <Text {...t.historyPopup.header}> History   ↑↓/jk navigate   Enter load   D delete   Esc/h close</Text>
       {entries.length === 0 && (
         <Box paddingX={1}>
-          <Text dimColor>No requests yet</Text>
+          <Text {...t.historyPopup.empty}>No requests yet</Text>
         </Box>
       )}
       {entries.map((entry, idx) => {
         const isSelected = idx === selectedIndex;
         const isActive = entry.id === activeId;
         const hasError = entry.error !== null || entry.response?.error !== undefined;
-        const statusColor = hasError ? "red" : "green";
-        const statusIcon = hasError ? "✗" : "✓";
         const dur = entry.durationMs !== null ? ` ${entry.durationMs}ms` : "";
+
+        const methodStyle = isSelected
+          ? t.historyPopup.selectedMethod
+          : isActive
+            ? t.historyPopup.activeMethod
+            : t.historyPopup.inactiveMethod;
 
         return (
           <Box key={entry.id} paddingX={1} gap={1}>
-            <Text color={statusColor}>{statusIcon}</Text>
-            <Text inverse={isSelected} color={isActive ? "white" : "gray"}>
-              {entry.request.method}
+            <Text {...(hasError ? t.historyPopup.errorIcon : t.historyPopup.successIcon)}>
+              {hasError ? "✗" : "✓"}
             </Text>
-            <Text dimColor>{entry.url.replace(/^https?:\/\//, "")}{dur}</Text>
+            <Text {...methodStyle}>{entry.request.method}</Text>
+            <Text {...t.historyPopup.meta}>{entry.url.replace(/^https?:\/\//, "")}{dur}</Text>
           </Box>
         );
       })}

@@ -18,7 +18,9 @@ import {
   cursorLeft, cursorRight, cursorUp, cursorDown,
   insertAt, deleteBackward, deleteForward,
 } from "./utils/cursor.mjs";
-import type { AppState } from "./types.mjs";
+import type { AppState, Theme } from "./types.mjs";
+import { ThemeProvider } from "./ThemeContext.js";
+import { ayuMirageTheme } from "./theme.mjs";
 
 const transport = new HttpTransport();
 const client = new RpcClient(transport);
@@ -26,10 +28,12 @@ const client = new RpcClient(transport);
 interface AppProps {
   /** JSON-RPC endpoint URL from CLI argv */
   url: string;
+  /** Visual theme; defaults to defaultTheme when omitted */
+  theme?: Theme;
 }
 
 /** Root application component managing global state and keyboard navigation */
-export function App({ url }: AppProps): React.ReactElement {
+export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactElement {
   const { exit } = useApp();
   const { setRawMode } = useStdin();
   const { stdout } = useStdout();
@@ -115,16 +119,12 @@ export function App({ url }: AppProps): React.ReactElement {
   useInput((input, key) => {
     // Always global
     if (key.ctrl && input === "c") { exit(); return; }
-    if (key.ctrl && input === "h") {
-      setState(s => ({ ...s, showHistory: !s.showHistory, error: null }));
-      return;
-    }
 
     // ── History popup ──────────────────────────────────────────────
     if (state.showHistory) {
-      if (key.upArrow) {
+      if (key.upArrow || input === "k") {
         setHistoryIndex(i => Math.max(0, i - 1));
-      } else if (key.downArrow) {
+      } else if (key.downArrow || input === "j") {
         setHistoryIndex(i => Math.min(state.history.length - 1, i + 1));
       } else if (key.return) {
         const entry = state.history[historyIndex];
@@ -145,7 +145,7 @@ export function App({ url }: AppProps): React.ReactElement {
           return { ...s, history: next, activeEntry: next[0] ?? null };
         });
         setHistoryIndex(i => Math.max(0, i - 1));
-      } else if (key.escape) {
+      } else if (key.escape || input === "h") {
         setState(s => ({ ...s, showHistory: false }));
       }
       return;
@@ -178,13 +178,13 @@ export function App({ url }: AppProps): React.ReactElement {
         return;
       }
       if (methodField === "list") {
-        if (key.upArrow) {
+        if (key.upArrow || input === "k") {
           if (methodListIndex === 0) {
             setMethodField("input");
           } else {
             setMethodListIndex(i => i - 1);
           }
-        } else if (key.downArrow) {
+        } else if (key.downArrow || input === "j") {
           setMethodListIndex(i => Math.min(filteredMethods.length - 1, i + 1));
         }
       } else {
@@ -244,6 +244,10 @@ export function App({ url }: AppProps): React.ReactElement {
 
     // ── Command mode ───────────────────────────────────────────────
     if (key.return) { void sendRequest(); return; }
+    if (input === "h") {
+      setState(s => ({ ...s, showHistory: !s.showHistory, error: null }));
+      return;
+    }
     if (input === "m") {
       setShowMethod(true);
       setMethodQuery("");
@@ -279,66 +283,68 @@ export function App({ url }: AppProps): React.ReactElement {
   });
 
   return (
-    <Box flexDirection="column" height={stdout.rows}>
-      {/* Top info bar — no border */}
-      <Box paddingX={1} gap={2}>
-        <Text color="cyan">rpcon</Text>
-        <Text color="#555555">{url}</Text>
-        {state.method !== "" && <Text color="#e8a020">{state.method}</Text>}
-        {state.loading && <Text color="yellow">sending…</Text>}
-      </Box>
+    <ThemeProvider theme={theme}>
+      <Box flexDirection="column" height={stdout.rows}>
+        {/* Top info bar — no border */}
+        <Box paddingX={1} gap={2}>
+          <Text {...theme.infoBar.logo}>rpcon</Text>
+          <Text {...theme.infoBar.url}>{url}</Text>
+          {state.method !== "" && <Text {...theme.infoBar.method}>{state.method}</Text>}
+          {state.loading && <Text {...theme.infoBar.loading}>sending…</Text>}
+        </Box>
 
-      {/* Gray separator */}
-      <Box
-        borderStyle="single"
-        borderTop={false}
-        borderLeft={false}
-        borderRight={false}
-        borderColor="gray"
-      />
-
-      {/* Params and Response side by side — fill remaining height */}
-      <Box flexDirection="row" flexGrow={1}>
-        <RequestPanel
-          params={state.params}
-          cursorPos={paramsCursor}
-          active={paramsActive}
-        />
+        {/* Separator */}
         <Box
-          borderStyle="single"
-          borderLeft={true}
-          borderRight={false}
+          borderStyle={theme.separator.style as "single"}
           borderTop={false}
-          borderBottom={false}
-          borderColor="gray"
+          borderLeft={false}
+          borderRight={false}
+          borderColor={theme.separator.color}
         />
-        <ResponsePanel entry={state.activeEntry} />
+
+        {/* Params and Response side by side — fill remaining height */}
+        <Box flexDirection="row" flexGrow={1}>
+          <RequestPanel
+            params={state.params}
+            cursorPos={paramsCursor}
+            active={paramsActive}
+          />
+          <Box
+            borderStyle={theme.panelDivider.style as "single"}
+            borderLeft={true}
+            borderRight={false}
+            borderTop={false}
+            borderBottom={false}
+            borderColor={theme.panelDivider.color}
+          />
+          <ResponsePanel entry={state.activeEntry} />
+        </Box>
+
+        {/* Status bar — no border */}
+        <StatusBar
+          paramsActive={paramsActive}
+          loading={state.loading}
+          error={state.error}
+          showHistory={state.showHistory}
+        />
+
+        {/* Overlays — rendered last so they paint on top */}
+        {state.showHistory && (
+          <HistoryPopup
+            entries={state.history}
+            activeId={state.activeEntry?.id ?? null}
+            selectedIndex={historyIndex}
+          />
+        )}
+        {showMethod && (
+          <MethodPopup
+            query={methodQuery}
+            methods={allMethods}
+            selectedIndex={methodListIndex}
+            fieldFocus={methodField}
+          />
+        )}
       </Box>
-
-      {/* Status bar — no border */}
-      <StatusBar
-        paramsActive={paramsActive}
-        loading={state.loading}
-        error={state.error}
-        showHistory={state.showHistory}
-      />
-
-      {/* Overlays — rendered last so they paint on top */}
-      {state.showHistory && (
-        <HistoryPopup
-          entries={state.history}
-          activeId={state.activeEntry?.id ?? null}
-          selectedIndex={historyIndex}
-        />
-      )}
-      {showMethod && (
-        <MethodPopup
-          query={methodQuery}
-          methods={allMethods}
-          selectedIndex={methodListIndex}
-          fieldFocus={methodField}
-        />
-      )}
-    </Box>
+    </ThemeProvider>
   );
 }

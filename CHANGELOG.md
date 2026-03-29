@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.5.0] - 2026-03-29
+
+### Added
+- Built-in themes: `ayu-mirage`, `nord` (in addition to `default`)
+- `themes` record exported from `src/theme.mts` — lookup by name
+- Theme system: `Theme` interface in `src/types.mts` with typed styles for every visual element
+  - `TextStyle` — spreads directly onto ink `<Text>` (color, backgroundColor, dimColor, bold, italic, underline, strikethrough, inverse)
+  - `BorderChars` — custom box-drawing character set (8 fields matching cli-boxes BoxStyle)
+  - `BorderDef` — border style (preset name or `BorderChars`) + color + backgroundColor
+- `src/theme.mts` — `defaultTheme` replicating the original color scheme
+- `src/ThemeContext.tsx` — `ThemeProvider` + `useTheme()` hook for context-based theme access
+- `App` accepts optional `theme?: Theme` prop; all components consume theme via `useTheme()`
+
+
+## [0.4.1] - 2026-03-29
+
+### Fixed
+- Popup overlays (HistoryPopup, MethodPopup) no longer bleed through underlying UI — added `backgroundColor="black"` to prevent terminal content showing through absolute-positioned boxes
+
+### Added
+- `j`/`k` keys for navigation in HistoryPopup and MethodPopup list (in addition to ↑↓)
+
+
 ## [0.4.0] - 2026-03-29
 
 ### Changed
