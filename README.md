@@ -1,0 +1,115 @@
+# rpcon
+
+A terminal UI client for JSON-RPC 2.0 — built for developers who prefer the keyboard over the mouse and the terminal over the browser tab.
+
+---
+
+## Philosophy
+
+Most API clients are built around the idea that you need to see everything at once: tabs, sidebars, dropdowns, form fields, status codes, raw headers. rpcon takes the opposite approach. The interface shows only what matters for the current task: the method you're calling, the parameters you're passing, and the result you got back.
+
+### YAML as the human interface
+
+JSON-RPC speaks JSON. rpcon lets you write YAML instead.
+
+YAML is a strict superset of JSON, but writing it is significantly less painful — no mandatory quotes around keys, no trailing comma errors, no nested brace counting. rpcon converts your YAML to JSON before sending and converts the response back to YAML for display. You get the full fidelity of JSON-RPC without the friction of writing JSON by hand.
+
+```yaml
+# instead of {"account": "0x1234abcd", "block": "latest"}
+account: "0x1234abcd"
+block: latest
+```
+
+The result comes back the same way:
+
+```yaml
+balance: "1000000000000000000"
+decimals: 18
+symbol: ETH
+```
+
+### nvim as the editor
+
+When parameters get complex, rpcon steps aside and opens your editor. Press `P` and nvim opens with the current params in a temp file. Save and quit — rpcon picks up where you left off. The same applies to viewing responses: `r` opens the result as YAML, `R` opens the raw JSON. Read-only, syntax-highlighted, navigable with your normal editor motions.
+
+The inline editor (`p`) handles quick edits without leaving the TUI.
+
+### No clutter
+
+There are no panels you don't need, no persistent sidebars, no status fields showing things you didn't ask for. History is a popup — present when you need it (`Ctrl+H`), invisible when you don't. The method name lives in the header. The URL is set once, at startup, and stays out of the way.
+
+---
+
+## Usage
+
+```bash
+npx tsx src/index.mts <url>
+```
+
+```bash
+npx tsx src/index.mts http://localhost:8080/rpc
+```
+
+## Keyboard reference
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Send request |
+| `m` | Open method picker (search + history list) |
+| `p` | Focus inline params editor |
+| `P` | Open params in nvim |
+| `r` | View response result as YAML in nvim (readonly) |
+| `R` | View raw JSON response in nvim (readonly) |
+| `Ctrl+H` | Toggle history popup |
+| `Ctrl+C` | Quit |
+
+**In the params editor:**
+
+| Key | Action |
+|-----|--------|
+| `↑↓←→` | Move cursor |
+| `Tab` | Insert 2-space indent |
+| `Ctrl+D` | Delete character forward |
+| `Esc` | Return to command mode |
+
+**In the method popup:**
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Switch between search field and list |
+| `↑↓` | Navigate list |
+| `Enter` | Confirm selection |
+| `Esc` | Close |
+
+---
+
+## Roadmap
+
+**Transports**
+- WebSocket — persistent connection, streaming notifications
+- TCP — raw socket transport for local services
+- Unix socket — for services that don't expose HTTP
+
+**Formats**
+- gRPC — protobuf-based RPC, schema-aware field completion
+- JSON-RPC over WebSocket with subscription support (eth_subscribe etc.)
+
+**History**
+- Persistent history across sessions (written to `~/.rpcon/history.json`)
+- Search and filter past requests
+- Replay a request from history with edited params
+
+**Flows**
+- Chain multiple requests where the output of one feeds into the next
+- Conditional branching based on response values
+- Save and name flows for reuse
+
+**Environment & variables**
+- Named environments (local, staging, production) with per-env URLs
+- Variable substitution in params: `account: $WALLET_ADDRESS`
+- `.env` file support and shell variable passthrough
+
+**Quality of life**
+- YAML syntax highlighting in the inline editor
+- Schema inference from response history for field completion
+- Custom HTTP headers per request or per environment
