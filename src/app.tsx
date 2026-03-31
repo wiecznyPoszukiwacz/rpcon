@@ -3,6 +3,8 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput, useApp, useStdin, useStdout } from "ink";
 import { spawnSync } from "child_process";
+import { pathToFileURL } from "node:url";
+import { join } from "node:path";
 import fs from "fs";
 import os from "os";
 import crypto from "crypto";
@@ -18,22 +20,23 @@ import {
   cursorLeft, cursorRight, cursorUp, cursorDown,
   insertAt, deleteBackward, deleteForward,
 } from "./utils/cursor.mjs";
-import type { AppState, Theme } from "./types.mjs";
+import type { AppState, Theme, THooks } from "./types.mjs";
 import { ThemeProvider } from "./ThemeContext.js";
 import { ayuMirageTheme } from "./theme.mjs";
-
-const transport = new HttpTransport();
-const client = new RpcClient(transport);
 
 interface AppProps {
   /** JSON-RPC endpoint URL from CLI argv */
   url: string;
   /** Visual theme; defaults to defaultTheme when omitted */
   theme?: Theme;
+  /** Extension hooks loaded from hooks.rpcon.mjs in the working directory */
+  hooks?: THooks;
 }
 
 /** Root application component managing global state and keyboard navigation */
-export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactElement {
+export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: AppProps): React.ReactElement {
+  const [activeHooks, setActiveHooks] = useState<THooks>(initialHooks);
+  const client = useMemo(() => new RpcClient(new HttpTransport(activeHooks)), [activeHooks]);
   const { exit } = useApp();
   const { setRawMode } = useStdin();
   const { stdout } = useStdout();
@@ -62,6 +65,9 @@ export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactEleme
   const [paramsActive, setParamsActive] = useState(false);
   const [paramsCursor, setParamsCursor] = useState(0);
 
+  // Quit confirmation state
+  const [confirmQuit, setConfirmQuit] = useState(false);
+
   /** All unique method names from history */
   const allMethods = useMemo(
     () => [...new Set(state.history.map(e => e.request.method))],
@@ -88,6 +94,35 @@ export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactEleme
     }
     try { return fs.readFileSync(tmpFile, "utf-8"); } catch { return null; }
     finally { try { fs.unlinkSync(tmpFile); } catch { /* ignore */ } }
+  }, [setRawMode]);
+
+  /** Open hooks.rpcon.mjs in nvim, then syntax-check and hot-reload it */
+  const editHooks = useCallback(async () => {
+    const hookPath = join(process.cwd(), "hooks.rpcon.mjs");
+    setRawMode(false);
+    spawnSync("nvim", [hookPath], { stdio: "inherit" });
+    setRawMode(true);
+
+    // syntax check without executing
+    const check = spawnSync("node", ["--check", hookPath], { encoding: "utf-8" });
+    if (check.status !== 0) {
+      const msg = (check.stderr as string).split("\n")[0] ?? "syntax error";
+      setState(s => ({ ...s, error: `hooks: ${msg}` }));
+      return;
+    }
+
+    // reload with cache-busting query param so ESM doesn't serve the stale module
+    try {
+      const mod = await import(pathToFileURL(hookPath).href + "?t=" + Date.now()) as THooks;
+      setActiveHooks({
+        baseUrl: mod.baseUrl,
+        beforeRequest: mod.beforeRequest,
+        afterResponse: mod.afterResponse,
+      });
+      setState(s => ({ ...s, error: null }));
+    } catch (e) {
+      setState(s => ({ ...s, error: `hooks reload: ${String(e)}` }));
+    }
   }, [setRawMode]);
 
   /** Validate params, convert YAML→JSON, and send the JSON-RPC request */
@@ -119,6 +154,13 @@ export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactEleme
   useInput((input, key) => {
     // Always global
     if (key.ctrl && input === "c") { exit(); return; }
+
+    // ── Quit confirmation ──────────────────────────────────────────
+    if (confirmQuit) {
+      if (input === "y") { exit(); return; }
+      setConfirmQuit(false);
+      return;
+    }
 
     // ── History popup ──────────────────────────────────────────────
     if (state.showHistory) {
@@ -244,6 +286,8 @@ export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactEleme
 
     // ── Command mode ───────────────────────────────────────────────
     if (key.return) { void sendRequest(); return; }
+    if (input === "q") { setConfirmQuit(true); return; }
+    if (input === "C") { void editHooks(); return; }
     if (input === "h") {
       setState(s => ({ ...s, showHistory: !s.showHistory, error: null }));
       return;
@@ -326,6 +370,7 @@ export function App({ url, theme = ayuMirageTheme }: AppProps): React.ReactEleme
           loading={state.loading}
           error={state.error}
           showHistory={state.showHistory}
+          confirmQuit={confirmQuit}
         />
 
         {/* Overlays — rendered last so they paint on top */}

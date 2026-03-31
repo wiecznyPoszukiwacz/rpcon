@@ -50,6 +50,33 @@ npx tsx src/index.mts <url>
 npx tsx src/index.mts http://localhost:8080/rpc
 ```
 
+The URL can be omitted if `hooks.rpcon.mjs` exports a `baseUrl` (see [Hooks](#hooks)).
+
+## Hooks
+
+Place a file named `hooks.rpcon.mjs` in the directory you launch rpcon from. All exports are optional.
+
+```js
+// hooks.rpcon.mjs
+
+// Omit the URL argument — rpcon reads it from here instead.
+// Can also be a function: export function baseUrl() { return process.env.RPC_URL; }
+export const baseUrl = "http://localhost:8080/rpc";
+
+// Runs before every request. Mutate request or headers freely.
+export function beforeRequest(request, headers) {
+  headers["Authorization"] = `Bearer ${process.env.TOKEN}`;
+  headers["X-Request-Id"] = crypto.randomUUID();
+}
+
+// Runs after every response. Read-only — for logging, metrics, etc.
+export function afterResponse(response) {
+  console.error("[rpc]", response.id, response.error ?? "ok");
+}
+```
+
+Press `C` inside rpcon to open the hooks file in nvim. After you save and quit, rpcon checks the syntax and hot-reloads the hooks without restarting.
+
 ## Keyboard reference
 
 | Key | Action |
@@ -60,8 +87,10 @@ npx tsx src/index.mts http://localhost:8080/rpc
 | `P` | Open params in nvim |
 | `r` | View response result as YAML in nvim (readonly) |
 | `R` | View raw JSON response in nvim (readonly) |
-| `Ctrl+H` | Toggle history popup |
-| `Ctrl+C` | Quit |
+| `h` | Toggle history popup |
+| `C` | Edit hooks file in nvim, then hot-reload |
+| `q` | Quit (asks for confirmation) |
+| `Ctrl+C` | Quit immediately |
 
 **In the params editor:**
 

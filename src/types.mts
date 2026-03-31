@@ -136,6 +136,15 @@ export interface Theme {
   };
 }
 
+// ── Hooks ─────────────────────────────────────────────────────────────────────
+
+/** User-supplied extension hooks loaded from hooks.rpcon.mjs in the working directory */
+export type THooks = {
+	baseUrl?: string | (() => string);
+	beforeRequest?: (request: JsonRpcRequest, headers: Record<string, string>) => void | Promise<void>;
+	afterResponse?: (response: Readonly<JsonRpcResponse>) => void | Promise<void>;
+};
+
 // ── Application state ─────────────────────────────────────────────────────────
 
 /** Global application state */
