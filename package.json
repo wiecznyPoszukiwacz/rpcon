@@ -1,14 +1,15 @@
 {
   "name": "rpcon",
-  "version": "0.6.0",
+  "version": "0.9.0",
   "description": "Interactive TUI client for JSON-RPC 2.0",
   "type": "module",
-  "main": "src/index.mts",
+  "main": "dist/index.mjs",
   "scripts": {
-    "start": "tsx src/index.mts",
-    "dev": "tsx watch src/index.mts",
+    "build": "tsc",
+    "start": "tsc && node dist/index.mjs",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --import tsx/esm src/**/*.test.mts"
+    "test": "tsc && node --test 'dist/**/*.test.mjs'"
   },
   "engines": {
     "node": ">=24.0.0"
@@ -23,7 +24,6 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
-    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
 }

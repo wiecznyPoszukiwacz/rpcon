@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.9.0] - 2026-04-02
+
+### Added
+- `apiName` hook export — string or function; shown in the header instead of the raw URL, hot-reloaded alongside other hooks
+- `?` key opens a keyboard shortcut help overlay anchored to the bottom-right corner
+- Command-line argument completions: `:load <tab>` completes request file names (with method as secondary hint); `:method <tab>` completes from method names found in all request files
+- Command abbreviations: any unambiguous prefix resolves to the full command (`:w` → `:write`, `:q` → `:quit`, etc.)
+- `:write [filename]` — replaces `:save` / `:saveas`; saves to current file or to a named file
+- `:load <filename>` — loads a request file by name directly from the command line
+- `:new` — clears method, params and the loaded-file reference
+- `:method <name>` — sets method directly without opening the picker when a name is supplied
+
+### Changed
+- Header bar gains a background colour and loses the separator line beneath it
+- Status bar redesigned: loaded file name (with dirty indicator `●`) on the left; `?` and `:` hints on the right in white
+- Command completion popup is wider (72 cols) and rendered without a border
+- `Ctrl+S` / `Ctrl+W` shortcuts removed in favour of `:write` / `:write <filename>`
+- File name moved from the header bar to the status bar
+
+## [0.8.0] - 2026-04-02
+
+### Added
+- Vim-style command line: press `:` to open a command prompt at the bottom of the screen
+  - Autocomplete popup floats above the status bar, showing matching commands with descriptions
+  - `↑`/`↓` navigate suggestions, `Tab` fills selected suggestion, `Enter` executes, `Esc` cancels
+  - Available commands: `send`, `method`, `params`, `nvim`, `view`, `viewraw`, `requests`, `history`, `save`, `saveas`, `hooks`, `quit`
+- `src/commands.mts` — command definitions and `filterCommands()` helper
+- `src/components/CommandCompletionPopup.tsx` — absolute-positioned completion overlay
+- `commandLine` theme section added to all three built-in themes (default, ayu-mirage, nord)
+- `CommandDef` type added to `types.mts`
+
+## [0.7.0] - 2026-04-02
+
+### Added
+- `*.rpcon.yaml` request files — named, reusable requests stored on disk
+  - Format: `name` (optional), `method`, `params` (object/array, optional)
+  - Scanned from the current working directory at startup and on `Space`
+- `Space` — open request picker popup (two-column: list on the left, preview on the right)
+- `Ctrl+S` — save method/params back to the currently loaded file (overwrite); triggers save-as when no file is loaded
+- `Ctrl+W` — save-as: prompts for a filename in the status bar, appends `.rpcon.yaml` automatically
+- Dirty indicator: `●` shown in the top info bar when method or params differ from the loaded file
+- `src/utils/requestFiles.mts` — scan, parse, serialise, and save `*.rpcon.yaml` files
+- `src/components/RequestPickerPopup.tsx` — absolute-positioned two-column overlay
+- `requestPickerPopup` theme section added to all three built-in themes (default, ayu-mirage, nord)
+
 ## [0.5.0] - 2026-03-29
 
 ### Added

@@ -79,6 +79,8 @@ export interface Theme {
     url: TextStyle;
     method: TextStyle;
     loading: TextStyle;
+    /** Background color of the header bar */
+    backgroundColor?: string;
   };
   /** Horizontal separator below the info bar */
   separator: BorderDef;
@@ -134,6 +136,55 @@ export interface Theme {
     unselectedItem: TextStyle;
     empty: TextStyle;
   };
+  requestPickerPopup: {
+    border: BorderDef;
+    divider: BorderDef;
+    header: TextStyle;
+    /** Currently highlighted item in the list */
+    selectedItem: TextStyle;
+    unselectedItem: TextStyle;
+    /** Preview area: method label */
+    previewMethod: TextStyle;
+    /** Preview area: params text */
+    previewParams: TextStyle;
+    /** Preview area: section labels ("Method:", "Params:") */
+    previewLabel: TextStyle;
+    empty: TextStyle;
+    /** Dirty-state indicator shown in the top info bar */
+    dirtyIndicator: TextStyle;
+  };
+  commandLine: {
+    /** The `:` prompt character */
+    prompt: TextStyle;
+    /** Typed command text */
+    inputText: TextStyle;
+    /** Block cursor */
+    cursor: TextStyle;
+    /** Border of the completion popup */
+    completionBorder: BorderDef;
+    /** Highlighted command name */
+    selectedName: TextStyle;
+    /** Highlighted command description */
+    selectedDescription: TextStyle;
+    /** Unhighlighted command name */
+    unselectedName: TextStyle;
+    /** Unhighlighted command description */
+    unselectedDescription: TextStyle;
+  };
+}
+
+// ── Request files ─────────────────────────────────────────────────────────────
+
+/** A request saved to a *.rpcon.yaml file on disk */
+export interface RequestFile {
+  /** Absolute path to the file */
+  filePath: string;
+  /** Display name — from the `name` field in YAML, or derived from filename */
+  name: string;
+  /** JSON-RPC method name */
+  method: string;
+  /** Params serialised as a YAML string (empty string = no params) */
+  params: string;
 }
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
@@ -141,9 +192,29 @@ export interface Theme {
 /** User-supplied extension hooks loaded from hooks.rpcon.mjs in the working directory */
 export type THooks = {
 	baseUrl?: string | (() => string);
+	/** Human-readable API label shown in the header instead of the raw URL */
+	apiName?: string | (() => string);
 	beforeRequest?: (request: JsonRpcRequest, headers: Record<string, string>) => void | Promise<void>;
 	afterResponse?: (response: Readonly<JsonRpcResponse>) => void | Promise<void>;
 };
+
+// ── Command line ──────────────────────────────────────────────────────────────
+
+/** A single command available in the vim-style command line */
+export interface CommandDef {
+  /** Primary name typed after `:` */
+  name: string;
+  /** Short description shown in the completion popup */
+  description: string;
+}
+
+/** A single row in the command-line completion popup */
+export interface CompletionItem {
+  /** Main label — command name or argument value */
+  primary: string;
+  /** Optional secondary text — command description or contextual info */
+  secondary?: string;
+}
 
 // ── Application state ─────────────────────────────────────────────────────────
 
@@ -160,4 +231,6 @@ export interface AppState {
   error: string | null;
   /** Whether the history popup overlay is visible */
   showHistory: boolean;
+  /** The request file currently loaded (null = no file loaded) */
+  loadedFile: RequestFile | null;
 }

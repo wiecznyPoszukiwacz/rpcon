@@ -1,8 +1,9 @@
 // Bottom status bar — no border
 
 import React from "react";
-import { Text } from "ink";
+import { Box, Text } from "ink";
 import { useTheme } from "../ThemeContext.js";
+import type { RequestFile } from "../types.mjs";
 
 interface StatusBarProps {
   paramsActive: boolean;
@@ -10,12 +11,39 @@ interface StatusBarProps {
   error: string | null;
   showHistory: boolean;
   confirmQuit: boolean;
+  /** Whether the vim-style command line is active */
+  commandMode: boolean;
+  /** Current text typed in the command line */
+  commandInput: string;
+  /** Currently loaded request file, if any */
+  loadedFile: RequestFile | null;
+  /** Whether method/params differ from the loaded file */
+  isDirty: boolean;
 }
 
-/** Displays keyboard hints and current application state */
-export function StatusBar({ paramsActive, loading, error, showHistory, confirmQuit }: StatusBarProps): React.ReactElement {
+/** Displays current state and file info; shows `?` / `:` hints on the right */
+export function StatusBar({
+  paramsActive,
+  loading,
+  error,
+  showHistory,
+  confirmQuit,
+  commandMode,
+  commandInput,
+  loadedFile,
+  isDirty,
+}: StatusBarProps): React.ReactElement {
   const t = useTheme();
 
+  if (commandMode) {
+    return (
+      <Box>
+        <Text {...t.commandLine.prompt}>:</Text>
+        <Text {...t.commandLine.inputText}>{commandInput}</Text>
+        <Text {...t.commandLine.cursor}>█</Text>
+      </Box>
+    );
+  }
   if (confirmQuit) {
     return <Text {...t.statusBar.error}>  Quit? y / any key to cancel</Text>;
   }
@@ -31,5 +59,21 @@ export function StatusBar({ paramsActive, loading, error, showHistory, confirmQu
   if (paramsActive) {
     return <Text {...t.statusBar.paramsActive}>  Esc command mode   Tab indent (2sp)</Text>;
   }
-  return <Text {...t.statusBar.default}>  Enter send   m method   p params   P nvim   r yaml   R raw   h history   C hooks   q quit</Text>;
+
+  // File label shown on the left
+  const fileLabel = loadedFile !== null
+    ? `${isDirty ? "● " : ""}${loadedFile.name}`
+    : "[No File]";
+
+  return (
+    <Box>
+      <Text {...(isDirty ? t.requestPickerPopup.dirtyIndicator : t.statusBar.default)}> {fileLabel}</Text>
+      <Box flexGrow={1} />
+      <Text {...t.statusBar.default}> </Text>
+      <Text color="white">?</Text>
+      <Text {...t.statusBar.default}>  help   </Text>
+      <Text color="white">:</Text>
+      <Text {...t.statusBar.default}>  command </Text>
+    </Box>
+  );
 }

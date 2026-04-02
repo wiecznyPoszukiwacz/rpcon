@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ESNext"],
     "jsx": "react-jsx",
     "strict": true,
-    "noEmit": true,
+    "rootDir": "src",
+    "outDir": "dist",
     "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true,
     "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true,
     "types": ["node"]

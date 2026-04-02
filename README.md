@@ -59,9 +59,14 @@ Place a file named `hooks.rpcon.mjs` in the directory you launch rpcon from. All
 ```js
 // hooks.rpcon.mjs
 
-// Omit the URL argument — rpcon reads it from here instead.
+// Omit the URL argument — rpcon reads the endpoint from here instead.
 // Can also be a function: export function baseUrl() { return process.env.RPC_URL; }
 export const baseUrl = "http://localhost:8080/rpc";
+
+// Human-readable label shown in the header instead of the raw URL.
+// Useful when the URL is long or environment-specific.
+// Can also be a function: export const apiName = () => `My API (${process.env.ENV})`;
+export const apiName = "My API (local)";
 
 // Runs before every request. Mutate request or headers freely.
 export function beforeRequest(request, headers) {
@@ -77,6 +82,28 @@ export function afterResponse(response) {
 
 Press `C` inside rpcon to open the hooks file in nvim. After you save and quit, rpcon checks the syntax and hot-reloads the hooks without restarting.
 
+## Command line
+
+Press `:` to open a vim-style command prompt at the bottom of the screen. A completion popup appears above it as you type. Abbreviations work as long as they are unambiguous — `:w` resolves to `:write`, `:q` to `:quit`, and so on.
+
+| Command | Description |
+|---------|-------------|
+| `:send` | Send the current request |
+| `:method [name]` | Open method picker, or set method directly when a name is given |
+| `:params` | Focus the inline params editor |
+| `:nvim` | Open params in nvim |
+| `:view` | View response as YAML in nvim (readonly) |
+| `:viewraw` | View raw JSON response in nvim (readonly) |
+| `:write [filename]` | Save to the current file; save as `filename` when given |
+| `:load <filename>` | Load a `.rpcon.yaml` request file by name |
+| `:new` | Clear method, params and loaded file |
+| `:requests` | Open the request file picker |
+| `:history` | Toggle history popup |
+| `:hooks` | Edit `hooks.rpcon.mjs` in nvim and hot-reload |
+| `:quit` | Quit rpcon |
+
+Completion for `:load` lists available request files. Completion for `:method` draws from method names found in all request files.
+
 ## Keyboard reference
 
 | Key | Action |
@@ -88,7 +115,10 @@ Press `C` inside rpcon to open the hooks file in nvim. After you save and quit, 
 | `r` | View response result as YAML in nvim (readonly) |
 | `R` | View raw JSON response in nvim (readonly) |
 | `h` | Toggle history popup |
+| `Space` | Open request file picker |
 | `C` | Edit hooks file in nvim, then hot-reload |
+| `?` | Toggle keyboard shortcut help overlay |
+| `:` | Open command line |
 | `q` | Quit (asks for confirmation) |
 | `Ctrl+C` | Quit immediately |
 
