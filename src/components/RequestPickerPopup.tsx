@@ -6,7 +6,7 @@ import type { RequestFile } from "../types.mjs";
 import { useTheme } from "../ThemeContext.js";
 
 interface RequestPickerPopupProps {
-  /** All discovered *.rpcon.yaml files */
+  /** All discovered *.rpcoon.yaml files */
   files: RequestFile[];
   /** Index of the currently highlighted entry */
   selectedIndex: number;
@@ -51,7 +51,7 @@ export function RequestPickerPopup({
         <Box flexDirection="column" width={LIST_WIDTH}>
           {files.length === 0 ? (
             <Box paddingX={1}>
-              <Text {...t.requestPickerPopup.empty}>No *.rpcon.yaml files found</Text>
+              <Text {...t.requestPickerPopup.empty}>No *.rpcoon.yaml files found</Text>
             </Box>
           ) : (
             visible.map((f, idx) => {

@@ -1,4 +1,4 @@
-// Built-in themes for rpcon
+// Built-in themes for rpcoon
 
 import type { Theme } from "./types.mjs";
 

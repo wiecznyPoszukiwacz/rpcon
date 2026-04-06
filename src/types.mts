@@ -175,7 +175,7 @@ export interface Theme {
 
 // ── Request files ─────────────────────────────────────────────────────────────
 
-/** A request saved to a *.rpcon.yaml file on disk */
+/** A request saved to a *.rpcoon.yaml file on disk */
 export interface RequestFile {
   /** Absolute path to the file */
   filePath: string;
@@ -189,7 +189,7 @@ export interface RequestFile {
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
-/** User-supplied extension hooks loaded from hooks.rpcon.mjs in the working directory */
+/** User-supplied extension hooks loaded from hooks.rpcoon.mjs in the working directory */
 export type THooks = {
 	baseUrl?: string | (() => string);
 	/** Human-readable API label shown in the header instead of the raw URL */

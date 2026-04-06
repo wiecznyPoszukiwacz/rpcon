@@ -1,4 +1,4 @@
-// Utilities for loading, saving, and serialising *.rpcon.yaml request files
+// Utilities for loading, saving, and serialising *.rpcoon.yaml request files
 
 import fs from "fs";
 import path from "path";
@@ -6,7 +6,7 @@ import { parse, stringify } from "yaml";
 import { valueToYaml } from "./yaml.mjs";
 import type { RequestFile } from "../types.mjs";
 
-/** Raw structure expected inside a *.rpcon.yaml file */
+/** Raw structure expected inside a *.rpcoon.yaml file */
 interface RawRequestFile {
   name?: string;
   method?: string;
@@ -15,15 +15,15 @@ interface RawRequestFile {
 
 /**
  * Derive a display name from a file path: strips the CWD prefix and
- * the `.rpcon.yaml` suffix, leaving just the base name.
+ * the `.rpcoon.yaml` suffix, leaving just the base name.
  */
 function nameFromPath(filePath: string, cwd: string): string {
   const rel = path.relative(cwd, filePath);
-  return rel.replace(/\.rpcon\.yaml$/, "");
+  return rel.replace(/\.rpcoon\.yaml$/, "");
 }
 
 /**
- * Parse a single *.rpcon.yaml file and return a RequestFile.
+ * Parse a single *.rpcoon.yaml file and return a RequestFile.
  * Returns null when the file cannot be read or is malformed.
  */
 export function parseRequestFile(filePath: string, cwd: string): RequestFile | null {
@@ -53,7 +53,7 @@ export function parseRequestFile(filePath: string, cwd: string): RequestFile | n
 }
 
 /**
- * Scan `cwd` for all *.rpcon.yaml files (non-recursive) and parse them.
+ * Scan `cwd` for all *.rpcoon.yaml files (non-recursive) and parse them.
  * Files that fail to parse are silently skipped.
  */
 export function scanRequestFiles(cwd: string): RequestFile[] {
@@ -65,7 +65,7 @@ export function scanRequestFiles(cwd: string): RequestFile[] {
   }
 
   return entries
-    .filter(e => e.endsWith(".rpcon.yaml"))
+    .filter(e => e.endsWith(".rpcoon.yaml"))
     .sort()
     .map(e => parseRequestFile(path.join(cwd, e), cwd))
     .filter((f): f is RequestFile => f !== null);
@@ -111,7 +111,7 @@ export function saveRequestFile(rf: RequestFile): void {
 
 /**
  * Save a request to a new file inside `cwd`.
- * Appends `.rpcon.yaml` if not already present in `filename`.
+ * Appends `.rpcoon.yaml` if not already present in `filename`.
  * Returns the resulting RequestFile (with the resolved filePath).
  */
 export function saveRequestFileAs(
@@ -120,9 +120,9 @@ export function saveRequestFileAs(
   params: string,
   cwd: string,
 ): RequestFile {
-  const normalized = filename.endsWith(".rpcon.yaml")
+  const normalized = filename.endsWith(".rpcoon.yaml")
     ? filename
-    : `${filename}.rpcon.yaml`;
+    : `${filename}.rpcoon.yaml`;
   const filePath = path.isAbsolute(normalized)
     ? normalized
     : path.join(cwd, normalized);

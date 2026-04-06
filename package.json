@@ -1,6 +1,6 @@
 {
-  "name": "rpcon",
-  "version": "0.9.0",
+  "name": "rpcoon",
+  "version": "0.9.1",
   "description": "Interactive TUI client for JSON-RPC 2.0",
   "type": "module",
   "main": "dist/index.mjs",

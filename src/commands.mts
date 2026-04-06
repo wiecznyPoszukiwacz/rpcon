@@ -7,16 +7,16 @@ export const COMMANDS: readonly CommandDef[] = [
   { name: "send",     description: "Send JSON-RPC request" },
   { name: "method",   description: "Open method picker" },
   { name: "params",   description: "Edit params inline" },
-  { name: "nvim",     description: "Open params in nvim" },
-  { name: "view",     description: "View response as YAML in nvim" },
-  { name: "viewraw",  description: "View raw JSON response in nvim" },
+  { name: "edit",     description: "Open params in $EDITOR" },
+  { name: "view",     description: "View response as YAML in $EDITOR" },
+  { name: "viewraw",  description: "View raw JSON response in $EDITOR" },
   { name: "requests", description: "Open request picker" },
   { name: "history",  description: "Toggle history popup" },
   { name: "write",    description: "Save  :write [filename]" },
   { name: "load",     description: "Load request file  :load <filename>" },
   { name: "new",      description: "New empty request" },
-  { name: "hooks",    description: "Edit hooks.rpcon.mjs in nvim" },
-  { name: "quit",     description: "Quit rpcon" },
+  { name: "hooks",    description: "Edit hooks.rpcoon.mjs in $EDITOR" },
+  { name: "quit",     description: "Quit rpcoon" },
 ] as const;
 
 /**

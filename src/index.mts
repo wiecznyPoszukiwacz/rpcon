@@ -10,7 +10,7 @@ import type { THooks } from "./types.mjs";
 const url = process.argv[2] ?? "";
 
 async function loadHooks(): Promise<THooks> {
-	const hookPath = join(process.cwd(), "hooks.rpcon.mjs");
+	const hookPath = join(process.cwd(), "hooks.rpcoon.mjs");
 	try {
 		const mod = await import(pathToFileURL(hookPath).href) as THooks;
 		return {
@@ -33,7 +33,7 @@ const resolvedUrl = url !== ""
 		: (hooks.baseUrl ?? "");
 
 if (resolvedUrl === "") {
-	process.stderr.write("Usage: rpcon <url>\n       or export baseUrl from hooks.rpcon.mjs\n");
+	process.stderr.write("Usage: rpcoon <url>\n       or export baseUrl from hooks.rpcoon.mjs\n");
 	process.exit(1);
 }
 

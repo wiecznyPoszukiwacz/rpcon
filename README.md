@@ -1,4 +1,8 @@
-# rpcon
+# rpcoon
+
+<p align="center">
+  <img src="assets/rpcoon-logo.png" alt="rpcoon logo" width="200"/>
+</p>
 
 A terminal UI client for JSON-RPC 2.0 — built for developers who prefer the keyboard over the mouse and the terminal over the browser tab.
 
@@ -6,13 +10,13 @@ A terminal UI client for JSON-RPC 2.0 — built for developers who prefer the ke
 
 ## Philosophy
 
-Most API clients are built around the idea that you need to see everything at once: tabs, sidebars, dropdowns, form fields, status codes, raw headers. rpcon takes the opposite approach. The interface shows only what matters for the current task: the method you're calling, the parameters you're passing, and the result you got back.
+Most API clients are built around the idea that you need to see everything at once: tabs, sidebars, dropdowns, form fields, status codes, raw headers. rpcoon takes the opposite approach. The interface shows only what matters for the current task: the method you're calling, the parameters you're passing, and the result you got back.
 
 ### YAML as the human interface
 
-JSON-RPC speaks JSON. rpcon lets you write YAML instead.
+JSON-RPC speaks JSON. rpcoon lets you write YAML instead.
 
-YAML is a strict superset of JSON, but writing it is significantly less painful — no mandatory quotes around keys, no trailing comma errors, no nested brace counting. rpcon converts your YAML to JSON before sending and converts the response back to YAML for display. You get the full fidelity of JSON-RPC without the friction of writing JSON by hand.
+YAML is a strict superset of JSON, but writing it is significantly less painful — no mandatory quotes around keys, no trailing comma errors, no nested brace counting. rpcoon converts your YAML to JSON before sending and converts the response back to YAML for display. You get the full fidelity of JSON-RPC without the friction of writing JSON by hand.
 
 ```yaml
 # instead of {"account": "0x1234abcd", "block": "latest"}
@@ -30,7 +34,7 @@ symbol: ETH
 
 ### nvim as the editor
 
-When parameters get complex, rpcon steps aside and opens your editor. Press `P` and nvim opens with the current params in a temp file. Save and quit — rpcon picks up where you left off. The same applies to viewing responses: `r` opens the result as YAML, `R` opens the raw JSON. Read-only, syntax-highlighted, navigable with your normal editor motions.
+When parameters get complex, rpcoon steps aside and opens your editor. Press `P` and nvim opens with the current params in a temp file. Save and quit — rpcoon picks up where you left off. The same applies to viewing responses: `r` opens the result as YAML, `R` opens the raw JSON. Read-only, syntax-highlighted, navigable with your normal editor motions.
 
 The inline editor (`p`) handles quick edits without leaving the TUI.
 
@@ -50,16 +54,16 @@ npx tsx src/index.mts <url>
 npx tsx src/index.mts http://localhost:8080/rpc
 ```
 
-The URL can be omitted if `hooks.rpcon.mjs` exports a `baseUrl` (see [Hooks](#hooks)).
+The URL can be omitted if `hooks.rpcoon.mjs` exports a `baseUrl` (see [Hooks](#hooks)).
 
 ## Hooks
 
-Place a file named `hooks.rpcon.mjs` in the directory you launch rpcon from. All exports are optional.
+Place a file named `hooks.rpcoon.mjs` in the directory you launch rpcoon from. All exports are optional.
 
 ```js
-// hooks.rpcon.mjs
+// hooks.rpcoon.mjs
 
-// Omit the URL argument — rpcon reads the endpoint from here instead.
+// Omit the URL argument — rpcoon reads the endpoint from here instead.
 // Can also be a function: export function baseUrl() { return process.env.RPC_URL; }
 export const baseUrl = "http://localhost:8080/rpc";
 
@@ -80,7 +84,7 @@ export function afterResponse(response) {
 }
 ```
 
-Press `C` inside rpcon to open the hooks file in nvim. After you save and quit, rpcon checks the syntax and hot-reloads the hooks without restarting.
+Press `C` inside rpcoon to open the hooks file in nvim. After you save and quit, rpcoon checks the syntax and hot-reloads the hooks without restarting.
 
 ## Command line
 
@@ -95,12 +99,12 @@ Press `:` to open a vim-style command prompt at the bottom of the screen. A comp
 | `:view` | View response as YAML in nvim (readonly) |
 | `:viewraw` | View raw JSON response in nvim (readonly) |
 | `:write [filename]` | Save to the current file; save as `filename` when given |
-| `:load <filename>` | Load a `.rpcon.yaml` request file by name |
+| `:load <filename>` | Load a `.rpcoon.yaml` request file by name |
 | `:new` | Clear method, params and loaded file |
 | `:requests` | Open the request file picker |
 | `:history` | Toggle history popup |
-| `:hooks` | Edit `hooks.rpcon.mjs` in nvim and hot-reload |
-| `:quit` | Quit rpcon |
+| `:hooks` | Edit `hooks.rpcoon.mjs` in nvim and hot-reload |
+| `:quit` | Quit rpcoon |
 
 Completion for `:load` lists available request files. Completion for `:method` draws from method names found in all request files.
 
@@ -154,7 +158,7 @@ Completion for `:load` lists available request files. Completion for `:method` d
 - JSON-RPC over WebSocket with subscription support (eth_subscribe etc.)
 
 **History**
-- Persistent history across sessions (written to `~/.rpcon/history.json`)
+- Persistent history across sessions (written to `~/.rpcoon/history.json`)
 - Search and filter past requests
 - Replay a request from history with edited params
 

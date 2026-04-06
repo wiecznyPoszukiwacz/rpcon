@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.1] - 2026-04-06
+
+### Changed
+- Project renamed from **rpcon** to **rpcoon**
+- Hook file renamed: `hooks.rpcon.mjs` → `hooks.rpcoon.mjs`
+- Request file extension changed: `*.rpcon.yaml` → `*.rpcoon.yaml`
+- Binary name updated: `rpcon` → `rpcoon`
+
 ## [0.9.0] - 2026-04-02
 
 ### Added

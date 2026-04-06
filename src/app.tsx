@@ -1,5 +1,10 @@
 // Main application component
 
+/** Return the editor binary to use: $VISUAL → $EDITOR → nvim fallback */
+function getEditor(): string {
+  return process.env["VISUAL"] ?? process.env["EDITOR"] ?? "nvim";
+}
+
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput, useApp, useStdin, useStdout } from "ink";
 import { spawnSync } from "child_process";
@@ -35,7 +40,7 @@ interface AppProps {
   url: string;
   /** Visual theme; defaults to defaultTheme when omitted */
   theme?: Theme;
-  /** Extension hooks loaded from hooks.rpcon.mjs in the working directory */
+  /** Extension hooks loaded from hooks.rpcoon.mjs in the working directory */
   hooks?: THooks;
 }
 
@@ -145,15 +150,16 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
     return [];
   }, [commandInput, requestFiles, allFilesMethods]);
 
-  /** Spawn nvim with a temp file; returns edited content or null on error */
-  const spawnNvim = useCallback((content: string, ext: string, readonly: boolean): string | null => {
-    const tmpFile = `${os.tmpdir()}/rpcon-${crypto.randomUUID()}.${ext}`;
+  /** Spawn the configured editor with a temp file; returns edited content or null on error */
+  const spawnEditor = useCallback((content: string, ext: string): string | null => {
+    const editor = getEditor();
+    const tmpFile = `${os.tmpdir()}/rpcoon-${crypto.randomUUID()}.${ext}`;
     fs.writeFileSync(tmpFile, content, "utf-8");
     setRawMode(false);
-    const result = spawnSync("nvim", readonly ? ["-R", tmpFile] : [tmpFile], { stdio: "inherit" });
+    const result = spawnSync(editor, [tmpFile], { stdio: "inherit" });
     setRawMode(true);
     if (result.error !== undefined) {
-      setState(s => ({ ...s, error: `nvim: ${result.error!.message}` }));
+      setState(s => ({ ...s, error: `${editor}: ${result.error!.message}` }));
       try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
       return null;
     }
@@ -161,11 +167,11 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
     finally { try { fs.unlinkSync(tmpFile); } catch { /* ignore */ } }
   }, [setRawMode]);
 
-  /** Open hooks.rpcon.mjs in nvim, then syntax-check and hot-reload it */
+  /** Open hooks.rpcoon.mjs in the configured editor, then syntax-check and hot-reload it */
   const editHooks = useCallback(async () => {
-    const hookPath = join(process.cwd(), "hooks.rpcon.mjs");
+    const hookPath = join(process.cwd(), "hooks.rpcoon.mjs");
     setRawMode(false);
-    spawnSync("nvim", [hookPath], { stdio: "inherit" });
+    spawnSync(getEditor(), [hookPath], { stdio: "inherit" });
     setRawMode(true);
 
     // syntax check without executing
@@ -191,23 +197,32 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
     }
   }, [setRawMode]);
 
-  /** Validate params, convert YAML→JSON, and send the JSON-RPC request */
-  const sendRequest = useCallback(async () => {
-    if (state.method.trim() === "") {
+  /** Exit immediately when clean, or ask for confirmation when there are unsaved changes. */
+  const attemptQuit = useCallback(() => {
+    if (isDirty) { setConfirmQuit(true); } else { exit(); }
+  }, [isDirty, exit]);
+
+  /** Validate params, convert YAML→JSON, and send the JSON-RPC request.
+   *  Accepts an optional override to use explicit method/params values instead
+   *  of reading from state (needed when called right after setState). */
+  const sendRequest = useCallback(async (override?: { method: string; params: string }) => {
+    const method = override?.method ?? state.method;
+    const params = override?.params ?? state.params;
+    if (method.trim() === "") {
       setState(s => ({ ...s, error: "Method is required" }));
       setShowMethod(true);
       return;
     }
     let parsedParams;
     try {
-      parsedParams = yamlToParams(state.params);
+      parsedParams = yamlToParams(params);
     } catch {
       setState(s => ({ ...s, error: "Invalid YAML in params" }));
       return;
     }
     setState(s => ({ ...s, loading: true, error: null }));
     setParamsActive(false);
-    const entry = await client.call(url, state.method, parsedParams);
+    const entry = await client.call(url, method, parsedParams);
     setState(s => ({
       ...s,
       loading: false,
@@ -251,7 +266,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
     }
     switch (name) {
       case "send":     void sendRequest(); break;
-      case "quit":     setConfirmQuit(true); break;
+      case "quit":     attemptQuit(); break;
       case "history":  setState(s => ({ ...s, showHistory: !s.showHistory, error: null })); break;
       case "method":
         if (arg !== "") {
@@ -261,20 +276,20 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
         }
         break;
       case "params":   setParamsActive(true); setParamsCursor(state.params.length); setState(s => ({ ...s, error: null })); break;
-      case "nvim": {
-        const edited = spawnNvim(state.params, "yaml", false);
+      case "edit": {
+        const edited = spawnEditor(state.params, "yaml");
         if (edited !== null) { setState(s => ({ ...s, params: edited, error: null })); setParamsCursor(edited.length); }
         break;
       }
       case "view": {
         if (state.activeEntry === null) { setState(s => ({ ...s, error: "No response yet" })); break; }
         const e = state.activeEntry;
-        spawnNvim(e.error !== null ? e.error : valueToYaml(e.response?.result), "yaml", true);
+        spawnEditor(e.error !== null ? e.error : valueToYaml(e.response?.result), "yaml");
         break;
       }
       case "viewraw": {
         if (state.activeEntry === null) { setState(s => ({ ...s, error: "No response yet" })); break; }
-        spawnNvim(JSON.stringify(state.activeEntry.response ?? state.activeEntry.error, null, 2), "json", true);
+        spawnEditor(JSON.stringify(state.activeEntry.response ?? state.activeEntry.error, null, 2), "json");
         break;
       }
       case "requests": setRequestFiles(scanRequestFiles(process.cwd())); setPickerIndex(0); setShowRequestPicker(true); break;
@@ -310,7 +325,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
         break;
       default: break; // resolveCommand already guards against unknown names
     }
-  }, [sendRequest, spawnNvim, state, editHooks, saveCurrentFile]);
+  }, [attemptQuit, sendRequest, spawnEditor, state, editHooks, saveCurrentFile]);
 
   useInput((input, key) => {
     // Always global
@@ -420,6 +435,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
         setPickerIndex(i => Math.min(requestFiles.length - 1, i + 1));
       } else if (key.return) {
         const file = requestFiles[pickerIndex];
+        setShowRequestPicker(false);
         if (file !== undefined) {
           setState(s => ({
             ...s,
@@ -429,8 +445,9 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
             error: null,
           }));
           setParamsCursor(0);
+          // Send immediately using file values directly — setState is async
+          void sendRequest({ method: file.method, params: file.params });
         }
-        setShowRequestPicker(false);
       } else if (key.escape) {
         setShowRequestPicker(false);
       }
@@ -531,7 +548,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
     // ── Command mode ───────────────────────────────────────────────
     if (input === ":") { setCommandMode(true); setCommandInput(""); setCommandSuggestionIndex(0); return; }
     if (key.return) { void sendRequest(); return; }
-    if (input === "q") { setConfirmQuit(true); return; }
+    if (input === "q") { attemptQuit(); return; }
     if (input === "C") { void editHooks(); return; }
     if (input === "?") { setShowHelp(h => !h); return; }
     if (input === "h") {
@@ -552,7 +569,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
       return;
     }
     if (input === "P") {
-      const edited = spawnNvim(state.params, "yaml", false);
+      const edited = spawnEditor(state.params, "yaml");
       if (edited !== null) {
         setState(s => ({ ...s, params: edited, error: null }));
         setParamsCursor(edited.length);
@@ -562,12 +579,12 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
     if (input === "r") {
       if (state.activeEntry === null) { setState(s => ({ ...s, error: "No response yet" })); return; }
       const { activeEntry: e } = state;
-      spawnNvim(e.error !== null ? e.error : valueToYaml(e.response?.result), "yaml", true);
+      spawnEditor(e.error !== null ? e.error : valueToYaml(e.response?.result), "yaml");
       return;
     }
     if (input === "R") {
       if (state.activeEntry === null) { setState(s => ({ ...s, error: "No response yet" })); return; }
-      spawnNvim(JSON.stringify(state.activeEntry.response ?? state.activeEntry.error, null, 2), "json", true);
+      spawnEditor(JSON.stringify(state.activeEntry.response ?? state.activeEntry.error, null, 2), "json");
       return;
     }
     // Space — open request picker
@@ -584,7 +601,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
       <Box flexDirection="column" height={stdout.rows}>
         {/* Top info bar — no border, themed background */}
         <Box paddingX={1} gap={2} backgroundColor={theme.infoBar.backgroundColor}>
-          <Text {...theme.infoBar.logo}>rpcon</Text>
+          <Text {...theme.infoBar.logo}>rpcoon</Text>
           <Text {...theme.infoBar.url}>{resolveHookString(activeHooks.apiName) ?? url}</Text>
           {state.method !== "" && <Text {...theme.infoBar.method}>{state.method}</Text>}
           {state.loading && <Text {...theme.infoBar.loading}>sending…</Text>}

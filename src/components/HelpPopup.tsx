@@ -14,7 +14,7 @@ interface HelpPopupProps {
 /** Two-column shortcut table rendered as a background box, no border */
 const ROWS: [string, string, string, string][] = [
   ["Enter", "send",             "m",     "method"],
-  ["p",     "params (inline)",  "P",     "params (nvim)"],
+  ["p",     "params (inline)",  "P",     "params ($EDITOR)"],
   ["r",     "response YAML",    "R",     "response raw"],
   ["h",     "history",          "Space", "requests"],
   ["C",     "hooks",            "q",     "quit"],
