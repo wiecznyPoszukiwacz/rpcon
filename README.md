@@ -1,7 +1,7 @@
 # rpcoon
 
 <p align="center">
-  <img src="assets/rpcoon-logo.png" alt="rpcoon logo" width="200"/>
+  <img src="assets/rpcoon-logo.png" alt="rpcoon logo" width="400"/>
 </p>
 
 A terminal UI client for JSON-RPC 2.0 — built for developers who prefer the keyboard over the mouse and the terminal over the browser tab.
