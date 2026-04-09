@@ -15,6 +15,7 @@ export const COMMANDS: readonly CommandDef[] = [
   { name: "write",    description: "Save  :write [filename]" },
   { name: "load",     description: "Load request file  :load <filename>" },
   { name: "new",      description: "New empty request" },
+  { name: "editfile", description: "Edit loaded request file in $EDITOR" },
   { name: "hooks",    description: "Edit hooks.rpcoon.mjs in $EDITOR" },
   { name: "quit",     description: "Quit rpcoon" },
 ] as const;

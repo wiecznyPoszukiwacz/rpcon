@@ -8,10 +8,12 @@ import { useTheme } from "../ThemeContext.js";
 
 interface ResponsePanelProps {
   entry: HistoryEntry | null;
+  /** Hint shown instead of "No response yet" when a request is loaded but not sent */
+  pendingHint?: string;
 }
 
 /** Renders the JSON-RPC response — success result as YAML, errors in red */
-export function ResponsePanel({ entry }: ResponsePanelProps): React.ReactElement {
+export function ResponsePanel({ entry, pendingHint }: ResponsePanelProps): React.ReactElement {
   const t = useTheme();
 
   return (
@@ -30,7 +32,7 @@ export function ResponsePanel({ entry }: ResponsePanelProps): React.ReactElement
       </Box>
 
       {entry === null && (
-        <Text {...t.responsePanel.empty}>No response yet</Text>
+        <Text {...t.responsePanel.empty}>{pendingHint ?? "No response yet"}</Text>
       )}
 
       {entry !== null && (

@@ -11,6 +11,7 @@ interface RawRequestFile {
   name?: string;
   method?: string;
   params?: unknown;
+  autoSend?: boolean;
 }
 
 /**
@@ -49,7 +50,9 @@ export function parseRequestFile(filePath: string, cwd: string): RequestFile | n
     ? doc.name.trim()
     : nameFromPath(filePath, cwd);
 
-  return { filePath, name, method, params };
+  const autoSend = typeof doc.autoSend === "boolean" ? doc.autoSend : false;
+
+  return { filePath, name, method, params, autoSend };
 }
 
 /**
@@ -96,6 +99,7 @@ export function serializeRequestFile(rf: RequestFile): string {
   if (paramsValue !== undefined && paramsValue !== null) {
     doc["params"] = paramsValue;
   }
+  if (rf.autoSend) doc["autoSend"] = true;
 
   return stringify(doc, { indent: 2 });
 }
@@ -127,7 +131,7 @@ export function saveRequestFileAs(
     ? normalized
     : path.join(cwd, normalized);
   const name = nameFromPath(filePath, cwd);
-  const rf: RequestFile = { filePath, name, method, params };
+  const rf: RequestFile = { filePath, name, method, params, autoSend: false };
   saveRequestFile(rf);
   return rf;
 }

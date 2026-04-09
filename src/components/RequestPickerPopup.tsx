@@ -60,14 +60,15 @@ export function RequestPickerPopup({
                 ? t.requestPickerPopup.selectedItem
                 : t.requestPickerPopup.unselectedItem;
               const prefix = isSelected ? "❯ " : "  ";
-              // Truncate name to fit the column
-              const maxLen = LIST_WIDTH - 4;
+              const autoSendIcon = f.autoSend ? " 󰑮" : "";
+              // Truncate name to fit the column (account for icon width)
+              const maxLen = LIST_WIDTH - 4 - (f.autoSend ? 2 : 0);
               const label = f.name.length > maxLen
                 ? f.name.slice(0, maxLen - 1) + "…"
                 : f.name;
               return (
                 <Box key={f.filePath} paddingX={1}>
-                  <Text {...style}>{prefix}{label}</Text>
+                  <Text {...style}>{prefix}{label}{autoSendIcon}</Text>
                 </Box>
               );
             })

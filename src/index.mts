@@ -37,5 +37,16 @@ if (resolvedUrl === "") {
 	process.exit(1);
 }
 
-console.clear();
-render(React.createElement(App, { url: resolvedUrl, hooks }));
+const ENTER_ALT_SCREEN = "\x1b[?1049h";
+const LEAVE_ALT_SCREEN = "\x1b[?1049l";
+
+function leaveAltScreen(): void {
+	process.stdout.write(LEAVE_ALT_SCREEN);
+}
+
+process.on("SIGINT", () => { leaveAltScreen(); process.exit(0); });
+process.on("SIGTERM", () => { leaveAltScreen(); process.exit(0); });
+
+process.stdout.write(ENTER_ALT_SCREEN);
+const instance = render(React.createElement(App, { url: resolvedUrl, hooks }));
+instance.waitUntilExit().then(leaveAltScreen);

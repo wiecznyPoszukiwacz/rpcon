@@ -27,7 +27,7 @@ import {
   cursorLeft, cursorRight, cursorUp, cursorDown,
   insertAt, deleteBackward, deleteForward,
 } from "./utils/cursor.mjs";
-import { scanRequestFiles, saveRequestFile, saveRequestFileAs } from "./utils/requestFiles.mjs";
+import { scanRequestFiles, saveRequestFile, saveRequestFileAs, parseRequestFile } from "./utils/requestFiles.mjs";
 import { filterCommands, resolveCommand } from "./commands.mjs";
 import type { CompletionItem } from "./types.mjs";
 import type { AppState, Theme, THooks, RequestFile } from "./types.mjs";
@@ -242,6 +242,7 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
       ...state.loadedFile,
       method: state.method,
       params: state.params,
+      autoSend: state.loadedFile.autoSend,
     };
     try {
       saveRequestFile(updated);
@@ -292,6 +293,19 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
         spawnEditor(JSON.stringify(state.activeEntry.response ?? state.activeEntry.error, null, 2), "json");
         break;
       }
+      case "editfile": {
+        if (state.loadedFile === null) { setState(s => ({ ...s, error: "no file loaded" })); break; }
+        setRawMode(false);
+        spawnSync(getEditor(), [state.loadedFile.filePath], { stdio: "inherit" });
+        setRawMode(true);
+        const reloaded = parseRequestFile(state.loadedFile.filePath, process.cwd());
+        if (reloaded !== null) {
+          setState(s => ({ ...s, method: reloaded.method, params: reloaded.params, loadedFile: reloaded, error: null }));
+          setParamsCursor(0);
+          setRequestFiles(scanRequestFiles(process.cwd()));
+        }
+        break;
+      }
       case "requests": setRequestFiles(scanRequestFiles(process.cwd())); setPickerIndex(0); setShowRequestPicker(true); break;
       case "hooks":    void editHooks(); break;
       case "write": {
@@ -315,8 +329,18 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
         const files = scanRequestFiles(process.cwd());
         const found = files.find(f => f.name === arg || f.filePath.endsWith(arg));
         if (found === undefined) { setState(s => ({ ...s, error: `load: not found: ${arg}` })); break; }
-        setState(s => ({ ...s, method: found.method, params: found.params, loadedFile: found, error: null }));
+        setState(s => ({
+          ...s,
+          method: found.method,
+          params: found.params,
+          loadedFile: found,
+          activeEntry: found.autoSend ? s.activeEntry : null,
+          error: null,
+        }));
         setParamsCursor(0);
+        if (found.autoSend) {
+          void sendRequest({ method: found.method, params: found.params });
+        }
         break;
       }
       case "new":
@@ -442,11 +466,13 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
             method: file.method,
             params: file.params,
             loadedFile: file,
+            activeEntry: file.autoSend ? s.activeEntry : null,
             error: null,
           }));
           setParamsCursor(0);
-          // Send immediately using file values directly — setState is async
-          void sendRequest({ method: file.method, params: file.params });
+          if (file.autoSend) {
+            void sendRequest({ method: file.method, params: file.params });
+          }
         }
       } else if (key.escape) {
         setShowRequestPicker(false);
@@ -622,7 +648,12 @@ export function App({ url, theme = ayuMirageTheme, hooks: initialHooks = {} }: A
             borderBottom={false}
             borderColor={theme.panelDivider.color}
           />
-          <ResponsePanel entry={state.activeEntry} />
+          <ResponsePanel
+            entry={state.activeEntry}
+            pendingHint={state.loadedFile !== null && !state.loadedFile.autoSend && state.activeEntry === null
+              ? "Press Enter or :send to execute this request"
+              : undefined}
+          />
         </Box>
 
         {/* Status bar — no border */}

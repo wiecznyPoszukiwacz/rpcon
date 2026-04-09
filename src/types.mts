@@ -185,6 +185,8 @@ export interface RequestFile {
   method: string;
   /** Params serialised as a YAML string (empty string = no params) */
   params: string;
+  /** Whether the request should be sent automatically after loading (default: true) */
+  autoSend: boolean;
 }
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
